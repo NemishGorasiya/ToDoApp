@@ -19,7 +19,6 @@ import TimerIcon from '../assets/icons/timer.svg';
 import SendIcon from '../assets/icons/send.svg';
 
 const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
-  console.log('todoList in Home', todoList);
   const [newTodo, setNewTodo] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [newTodoDateAndTime, setNewTodoDateAndTime] = useState(null);
@@ -75,12 +74,8 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
     },
   );
 
-  console.log('called home');
-
   const isNewTodoValid =
     newTodo.trim().length > 0 && newTodoDateAndTime !== null;
-
-  console.log('isNewTodoValid', isNewTodoValid);
 
   return (
     <View style={styles.container}>

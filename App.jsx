@@ -67,19 +67,16 @@ const App = () => {
     [todoList],
   );
 
-  console.log('latest todo', todoList);
-
   const readTodoList = async () => {
     try {
       setIsLoading(true);
       setTimeout(async () => {
         const storedTodoList = await AsyncStorage.getItem('todoList');
-        console.log('after readTodoList', storedTodoList);
         if (storedTodoList !== null) {
           setTodoList(JSON.parse(storedTodoList));
         }
         setIsLoading(false);
-      }, 5000);
+      }, 3000);
     } catch (error) {
       console.log('error', error);
     }
@@ -88,8 +85,6 @@ const App = () => {
   useEffect(() => {
     readTodoList();
   }, []);
-
-  console.log('isLoading', isLoading);
 
   return (
     <NavigationContainer>
