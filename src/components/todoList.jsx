@@ -1,20 +1,23 @@
 import {formatRelative} from 'date-fns';
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 
-const TodoList = ({list, listTitle, updateTodoStatus}) => {
+const TodoList = ({navigation, list, listTitle, editTodo}) => {
   return (
     <View style={styles.todoListContainer}>
       <Text style={styles.todoListTitle}>{listTitle}</Text>
       {list.map(item => {
         const formattedTime = formatRelative(item.dateAndTime, new Date());
         return (
-          <View key={item.id} style={styles.todoItem}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.todoItem}
+            onPress={() => navigation.navigate('Todo', {todo: item})}>
             <View>
               <BouncyCheckbox
                 isChecked={item.completed}
-                onPress={isChecked => updateTodoStatus(item.id, isChecked)}
+                onPress={isChecked => editTodo(item.id, {completed: isChecked})}
                 size={16}
                 style={styles.checkbox}
               />
@@ -32,7 +35,7 @@ const TodoList = ({list, listTitle, updateTodoStatus}) => {
                 {formattedTime}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
     </View>
