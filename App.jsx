@@ -93,7 +93,7 @@ const App = () => {
       <GestureHandlerRootView>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" options={{headerShown: !isLoading}}>
+            <Stack.Screen name="Home" options={{headerShown: false}}>
               {props =>
                 isLoading ? (
                   <Splash {...props} />
@@ -107,7 +107,7 @@ const App = () => {
                 )
               }
             </Stack.Screen>
-            <Stack.Screen name="Todo">
+            <Stack.Screen name="Todo" options={{headerShown: false}}>
               {props => (
                 <Todo {...props} deleteTodo={deleteTodo} editTodo={editTodo} />
               )}

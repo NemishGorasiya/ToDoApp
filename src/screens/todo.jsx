@@ -13,6 +13,7 @@ import {formatRelative} from 'date-fns';
 
 import TimerIcon from '../assets/icons/timer.svg';
 import TrashIcon from '../assets/icons/trash.svg';
+import BackIcon from '../assets/icons/back.svg';
 import {useFocusEffect} from '@react-navigation/native';
 import ActionSheet from 'react-native-actions-sheet';
 
@@ -55,6 +56,10 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
     ToastAndroid.show('Todo deleted', ToastAndroid.SHORT);
   };
 
+  const onGoBack = () => {
+    navigation.goBack();
+  };
+
   const formattedTime = formatRelative(todoDateAndTime, new Date());
 
   useFocusEffect(
@@ -86,6 +91,14 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.screenTitleContainer}>
+        <TouchableOpacity onPress={onGoBack} style={styles.backIconWrapper}>
+          <BackIcon height={24} width={24} />
+        </TouchableOpacity>
+        <View style={styles.screenTitleTextWrapper}>
+          <Text style={styles.screenTitle}>Todo</Text>
+        </View>
+      </View>
       <View style={styles.todoMainRow}>
         <View>
           <BouncyCheckbox
@@ -171,6 +184,23 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#121212',
     gap: 24,
+  },
+  screenTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backIconWrapper: {},
+  screenTitleTextWrapper: {
+    alignItems: 'center',
+    alignContent: 'center',
+  },
+  screenTitle: {
+    color: '#fff',
+    fontSize: 24,
+    lineHeight: 30,
+    padding: 0,
+    margin: 0,
   },
   todoTextInput: {
     color: '#fff',
