@@ -3,6 +3,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,6 +14,7 @@ import {formatRelative} from 'date-fns';
 import TimerIcon from '../assets/icons/timer.svg';
 import TrashIcon from '../assets/icons/trash.svg';
 import {useFocusEffect} from '@react-navigation/native';
+import ActionSheet from 'react-native-actions-sheet';
 
 const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const {todo} = route.params;
@@ -27,6 +29,8 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const [isTodoCompleted, setIsTodoCompleted] = useState(completed);
   const isTodoCompletedRef = useRef(completed);
   const [isShownDatePicker, setIsShownDatePicker] = useState(false);
+
+  const actionSheetRef = useRef(null);
 
   const openDatePicker = () => {
     setIsShownDatePicker(true);
@@ -48,6 +52,7 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const onDeleteTodo = () => {
     deleteTodo(id);
     navigation.navigate('Home');
+    ToastAndroid.show('Todo deleted', ToastAndroid.SHORT);
   };
 
   const formattedTime = formatRelative(todoDateAndTime, new Date());
@@ -116,7 +121,11 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
         </TouchableOpacity>
       </View>
       <View style={styles.todoRow}>
-        <TouchableOpacity onPress={onDeleteTodo} style={styles.todoRowLeft}>
+        <TouchableOpacity
+          onPress={() => {
+            actionSheetRef.current.show();
+          }}
+          style={styles.todoRowLeft}>
           <TrashIcon height={24} width={24} />
           <Text style={[styles.todoSubText, styles.deleteText]}>
             Delete Task
@@ -129,6 +138,29 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
         onConfirm={onTodoDateAndTimeChange}
         onCancel={closeDatePicker}
       />
+      <ActionSheet ref={actionSheetRef}>
+        <View style={styles.actionSheetContent}>
+          <Text style={styles.actionSheetMessage}>Are you sure?</Text>
+          <View style={styles.actionSheetButtonsWrapper}>
+            <TouchableOpacity
+              style={[styles.actionSheetButton, styles.actionSheetCancelButton]}
+              onPress={() => actionSheetRef.current.hide()}>
+              <Text
+                style={[
+                  styles.actionSheetButtonText,
+                  styles.actionSheetCancelButtonText,
+                ]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionSheetButton, styles.actionSheetDeleteButton]}
+              onPress={onDeleteTodo}>
+              <Text style={styles.actionSheetButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ActionSheet>
     </View>
   );
 };
@@ -190,6 +222,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
+  },
+  actionSheetContent: {
+    padding: 24,
+    gap: 16,
+  },
+  actionSheetMessage: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  actionSheetButtonsWrapper: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  actionSheetButton: {
+    backgroundColor: '#444444',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    flex: 1,
+  },
+  actionSheetCancelButton: {
+    backgroundColor: 'transparent',
+  },
+  actionSheetDeleteButton: {
+    backgroundColor: '#FF4949',
+  },
+  actionSheetButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+  actionSheetCancelButtonText: {
+    color: '#000',
+    textAlign: 'center',
   },
 });
 

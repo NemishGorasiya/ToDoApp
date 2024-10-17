@@ -3,6 +3,8 @@ import uuid from 'react-native-uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import Home from './src/screens/home';
 import Todo from './src/screens/todo';
@@ -87,29 +89,33 @@ const App = () => {
   }, []);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" options={{headerShown: !isLoading}}>
-          {props =>
-            isLoading ? (
-              <Splash {...props} />
-            ) : (
-              <Home
-                {...props}
-                todoList={todoList}
-                addTodo={addTodo}
-                editTodo={editTodo}
-              />
-            )
-          }
-        </Stack.Screen>
-        <Stack.Screen name="Todo">
-          {props => (
-            <Todo {...props} deleteTodo={deleteTodo} editTodo={editTodo} />
-          )}
-        </Stack.Screen>
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <GestureHandlerRootView>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen name="Home" options={{headerShown: !isLoading}}>
+              {props =>
+                isLoading ? (
+                  <Splash {...props} />
+                ) : (
+                  <Home
+                    {...props}
+                    todoList={todoList}
+                    addTodo={addTodo}
+                    editTodo={editTodo}
+                  />
+                )
+              }
+            </Stack.Screen>
+            <Stack.Screen name="Todo">
+              {props => (
+                <Todo {...props} deleteTodo={deleteTodo} editTodo={editTodo} />
+              )}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 };
 
