@@ -1,6 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -78,7 +79,7 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
+      <ScrollView style={styles.hero}>
         {todoList.length === 0 ? (
           <View style={styles.fallbackContainer}>
             <Image source={CheckListImage} />
@@ -103,7 +104,7 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
             />
           </View>
         )}
-      </View>
+      </ScrollView>
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.openActionSheetButton}
@@ -163,7 +164,6 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: '#121212',
     flex: 1,
-    padding: 24,
   },
   fallbackContainer: {
     flex: 1,
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
   },
   todoListWrapper: {
     rowGap: 16,
+    padding: 24,
   },
   newTodoInput: {
     borderWidth: 1,
