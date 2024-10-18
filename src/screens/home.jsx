@@ -27,7 +27,11 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
   const actionSheetRef = useRef(null);
 
   const onAddNewTodo = () => {
-    addTodo({newTodoText: newTodo, newTodoDescription, newTodoDateAndTime});
+    addTodo({
+      newTodoText: newTodo,
+      newTodoDescription,
+      newTodoDateAndTime: newTodoDateAndTime.toString(),
+    });
     setNewTodo('');
     setNewTodoDescription('');
     setNewTodoDateAndTime(null);
@@ -90,18 +94,22 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
           </View>
         ) : (
           <View style={styles.todoListWrapper}>
-            <TodoList
-              list={inCompleteTodos}
-              editTodo={editTodo}
-              listTitle="Todo List"
-              navigation={navigation}
-            />
-            <TodoList
-              list={completedTodos}
-              editTodo={editTodo}
-              listTitle="Completed"
-              navigation={navigation}
-            />
+            {inCompleteTodos.length > 0 && (
+              <TodoList
+                list={inCompleteTodos}
+                editTodo={editTodo}
+                listTitle="Todo List"
+                navigation={navigation}
+              />
+            )}
+            {completedTodos.length > 0 && (
+              <TodoList
+                list={completedTodos}
+                editTodo={editTodo}
+                listTitle="Completed"
+                navigation={navigation}
+              />
+            )}
           </View>
         )}
       </ScrollView>
