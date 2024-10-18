@@ -1,6 +1,5 @@
 import React, {useRef, useState} from 'react';
 import {
-  Button,
   Image,
   StyleSheet,
   Text,
@@ -8,7 +7,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import RBSheet from 'react-native-raw-bottom-sheet';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import TodoList from '../components/todoList';
@@ -17,6 +15,7 @@ import CheckListImage from '../assets/images/checklist.png';
 import AddIcon from '../assets/icons/add.svg';
 import TimerIcon from '../assets/icons/timer.svg';
 import SendIcon from '../assets/icons/send.svg';
+import ActionSheet from 'react-native-actions-sheet';
 
 const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
   const [newTodo, setNewTodo] = useState('');
@@ -24,14 +23,14 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
   const [newTodoDateAndTime, setNewTodoDateAndTime] = useState(null);
   const [isShownDatePicker, setIsShownDatePicker] = useState(false);
 
-  const bottomSheetRef = useRef(null);
+  const actionSheetRef = useRef(null);
 
   const onAddNewTodo = () => {
     addTodo({newTodoText: newTodo, newTodoDescription, newTodoDateAndTime});
     setNewTodo('');
     setNewTodoDescription('');
     setNewTodoDateAndTime(null);
-    bottomSheetRef.current.close();
+    actionSheetRef.current.hide();
   };
 
   const onNewTodoChange = value => {
@@ -55,8 +54,8 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
     closeDatePicker();
   };
 
-  const openBottomSheet = () => {
-    bottomSheetRef.current.open();
+  const openActionSheet = () => {
+    actionSheetRef.current.show();
   };
 
   const {inCompleteTodos, completedTodos} = todoList.reduce(
@@ -107,14 +106,18 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
       </View>
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.openBottomSheetButton}
-          onPress={openBottomSheet}>
+          style={styles.openActionSheetButton}
+          onPress={openActionSheet}>
           <AddIcon height={32} width={32} />
         </TouchableOpacity>
       </View>
-      <RBSheet ref={bottomSheetRef}>
-        <View style={styles.bottomSheetContainer}>
-          <Text style={styles.bottomSheetTitle}>Add Task</Text>
+      <ActionSheet
+        containerStyle={styles.actionSheet}
+        ref={actionSheetRef}
+        gestureEnabled={true}
+        indicatorStyle={styles.actionSheetIndicator}>
+        <View style={styles.actionSheetContent}>
+          <Text style={styles.actionSheetTitle}>Add Task</Text>
           <TextInput
             style={styles.newTodoInput}
             onChangeText={onNewTodoChange}
@@ -148,7 +151,7 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
           onConfirm={onNewTodoDateAndTimeChange}
           onCancel={closeDatePicker}
         />
-      </RBSheet>
+      </ActionSheet>
     </View>
   );
 };
@@ -198,11 +201,17 @@ const styles = StyleSheet.create({
   todoDetailsWrapper: {
     flex: 1,
   },
-  bottomSheetContainer: {
-    padding: 16,
+  actionSheet: {
     backgroundColor: '#363636',
   },
-  bottomSheetTitle: {
+  actionSheetIndicator: {
+    backgroundColor: '#979797',
+    width: 100,
+  },
+  actionSheetContent: {
+    padding: 16,
+  },
+  actionSheetTitle: {
     color: '#fff',
     fontSize: 20,
     lineHeight: 30,
@@ -213,7 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 16,
   },
-  openBottomSheetButton: {
+  openActionSheetButton: {
     backgroundColor: '#8687E7',
     borderRadius: 32,
     height: 64,
