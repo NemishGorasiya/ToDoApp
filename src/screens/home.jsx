@@ -83,7 +83,9 @@ const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.hero}>
+      <ScrollView
+        style={styles.hero}
+        contentContainerStyle={styles.heroContent}>
         {todoList.length === 0 ? (
           <View style={styles.fallbackContainer}>
             <Image source={CheckListImage} />
@@ -173,8 +175,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
     flex: 1,
   },
-  fallbackContainer: {
+  heroContent: {
     flex: 1,
+  },
+  fallbackContainer: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,6 +197,7 @@ const styles = StyleSheet.create({
   todoListWrapper: {
     rowGap: 16,
     padding: 24,
+    flexGrow: 1,
   },
   newTodoInput: {
     borderWidth: 1,
