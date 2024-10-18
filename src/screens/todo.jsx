@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +17,7 @@ import TrashIcon from '../assets/icons/trash.svg';
 import BackIcon from '../assets/icons/back.svg';
 import {useFocusEffect} from '@react-navigation/native';
 import ActionSheet from 'react-native-actions-sheet';
+import useDebounce from '../hooks/useDebounce';
 
 const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const {todo} = route.params;
@@ -60,6 +62,25 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
     navigation.goBack();
   };
 
+  const showToast = message => {
+    ToastAndroid.show(message, ToastAndroid.SHORT);
+  };
+
+  const debouncedShowToast = useDebounce(message => showToast(message), 500);
+
+  const onchangeTodoText = value => {
+    if (value.length > 100) {
+      debouncedShowToast('Todo title should not exceed 100 characters');
+    }
+    setTodoText(value.slice(0, 100));
+  };
+  const onChangeTodoDescription = value => {
+    if (value.length > 2000) {
+      debouncedShowToast('Todo description should not exceed 1000 characters');
+    }
+    setTodoDescription(value.slice(0, 2000));
+  };
+
   const formattedTime = formatRelative(todoDateAndTime, new Date());
 
   useFocusEffect(
@@ -90,7 +111,9 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   }, [isTodoCompleted, todoDateAndTime, todoDescription, todoText]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.todoContent}>
       <View style={styles.screenTitleContainer}>
         <TouchableOpacity onPress={onGoBack} style={styles.backIconWrapper}>
           <BackIcon height={24} width={24} />
@@ -112,15 +135,16 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
           <TextInput
             style={styles.todoTextInput}
             value={todoText}
-            onChangeText={setTodoText}
-            underlineColor="blue"
+            onChangeText={onchangeTodoText}
+            multiline
           />
           <TextInput
             style={styles.todoDescriptionInput}
             value={todoDescription}
-            onChangeText={setTodoDescription}
+            onChangeText={onChangeTodoDescription}
             placeholder="Task Description"
             placeholderTextColor="#AFAFAF"
+            multiline
           />
         </View>
       </View>
@@ -174,16 +198,18 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
           </View>
         </View>
       </ActionSheet>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
     backgroundColor: '#121212',
+  },
+  todoContent: {
     gap: 24,
+    padding: 24,
   },
   screenTitleContainer: {
     flexDirection: 'row',
@@ -220,6 +246,7 @@ const styles = StyleSheet.create({
   },
   todoTextContainer: {
     gap: 16,
+    flex: 1,
   },
   checkbox: {
     width: 16,
