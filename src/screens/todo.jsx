@@ -95,7 +95,7 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
           editTodo(id, {
             text: todoTextRef.current === '' ? text : todoTextRef.current,
             description: todoDescriptionRef.current,
-            dateAndTime: todoDateAndTimeRef.current,
+            dateAndTime: todoDateAndTimeRef.current.toString(),
             completed: isTodoCompletedRef.current,
           });
         }
@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 18,
+    color: '#444444',
   },
   actionSheetButtonsWrapper: {
     flexDirection: 'row',
