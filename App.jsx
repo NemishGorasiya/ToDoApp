@@ -12,9 +12,45 @@ import Splash from './src/screens/splash';
 
 const Stack = createNativeStackNavigator();
 
+import PushNotification from 'react-native-push-notification';
+import {PermissionsAndroid, Platform} from 'react-native';
+
+PushNotification.configure({
+  onRegister: function (token) {
+    console.log('TOKEN:', token);
+  },
+  onNotification: function (notification) {
+    console.log('NOTIFICATION:', notification);
+  },
+  permissions: {
+    alert: true,
+    badge: true,
+    sound: true,
+  },
+  popInitialNotification: true,
+  requestPermissions: Platform.OS === 'ios',
+});
+
+PushNotification.createChannel(
+  {
+    channelId: 'notifyMe',
+    channelName: 'My channel',
+    channelDescription: 'A channel to categorise your notifications',
+  },
+  created => console.log(`createChannel returned '${created}'`),
+);
+
 const App = () => {
   const [todoList, setTodoList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const testPush = () => {
+    PushNotification.localNotification({
+      channelId: 'notifyMe',
+      title: 'My Notification Title',
+      message: 'My Notification Message',
+    });
+  };
 
   const addTodo = useCallback(
     async ({newTodoText, newTodoDescription = '', newTodoDateAndTime}) => {
@@ -84,7 +120,17 @@ const App = () => {
     }
   };
 
+  const askForPermission = async () => {
+    console.log('called askForPermission');
+    try {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+    } catch (error) {}
+  };
+
   useEffect(() => {
+    askForPermission();
     readTodoList();
   }, []);
 

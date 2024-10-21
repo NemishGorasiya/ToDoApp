@@ -18,7 +18,7 @@ import TimerIcon from '../assets/icons/timer.svg';
 import SendIcon from '../assets/icons/send.svg';
 import ActionSheet from 'react-native-actions-sheet';
 
-const Home = ({navigation, route, todoList, editTodo, addTodo}) => {
+const Home = ({navigation, todoList, editTodo, addTodo}) => {
   const [newTodo, setNewTodo] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [newTodoDateAndTime, setNewTodoDateAndTime] = useState(null);
