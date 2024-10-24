@@ -15,6 +15,10 @@ const Stack = createNativeStackNavigator();
 import PushNotification, {Importance} from 'react-native-push-notification';
 import {PermissionsAndroid, Platform} from 'react-native';
 
+import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+
+const rnBiometrics = new ReactNativeBiometrics();
+
 PushNotification.configure({
   onRegister: function (token) {
     console.log('TOKEN:', token);
@@ -43,6 +47,7 @@ PushNotification.createChannel(
 const App = () => {
   const [todoList, setTodoList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const addTodo = useCallback(
     async ({
@@ -133,34 +138,70 @@ const App = () => {
     readTodoList();
   }, []);
 
+  const checkForBiometrics = async () => {
+    try {
+      const result = await rnBiometrics.isSensorAvailable();
+      console.log('result', result);
+      if (result.available) {
+        const {success, error} = await rnBiometrics.simplePrompt({
+          promptMessage: 'Authenticate to continue',
+        });
+        if (success) {
+          setIsAuthenticated(true);
+          askForPermission();
+          readTodoList();
+          console.log('success', success);
+        } else {
+          console.log('error', error);
+        }
+      } else {
+        setIsAuthenticated(true);
+        askForPermission();
+        readTodoList();
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
+  useEffect(() => {
+    checkForBiometrics();
+  }, []);
+
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" options={{headerShown: false}}>
-              {props =>
-                isLoading ? (
-                  <Splash {...props} />
-                ) : (
-                  <Home
+    isAuthenticated && (
+      <SafeAreaProvider>
+        <GestureHandlerRootView>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Home">
+              <Stack.Screen name="Home" options={{headerShown: false}}>
+                {props =>
+                  isLoading ? (
+                    <Splash {...props} />
+                  ) : (
+                    <Home
+                      {...props}
+                      todoList={todoList}
+                      addTodo={addTodo}
+                      editTodo={editTodo}
+                    />
+                  )
+                }
+              </Stack.Screen>
+              <Stack.Screen name="Todo" options={{headerShown: false}}>
+                {props => (
+                  <Todo
                     {...props}
-                    todoList={todoList}
-                    addTodo={addTodo}
+                    deleteTodo={deleteTodo}
                     editTodo={editTodo}
                   />
-                )
-              }
-            </Stack.Screen>
-            <Stack.Screen name="Todo" options={{headerShown: false}}>
-              {props => (
-                <Todo {...props} deleteTodo={deleteTodo} editTodo={editTodo} />
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+                )}
+              </Stack.Screen>
+            </Stack.Navigator>
+          </NavigationContainer>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    )
   );
 };
 
