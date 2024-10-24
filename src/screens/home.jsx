@@ -1,14 +1,17 @@
 import React, {useRef, useState} from 'react';
 import {
+  Button,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import PushNotification, {Importance} from 'react-native-push-notification';
 
 import TodoList from '../components/todoList';
 
@@ -16,25 +19,60 @@ import CheckListImage from '../assets/images/checklist.png';
 import AddIcon from '../assets/icons/add.svg';
 import TimerIcon from '../assets/icons/timer.svg';
 import SendIcon from '../assets/icons/send.svg';
+import CrossIcon from '../assets/icons/cross.svg';
 import ActionSheet from 'react-native-actions-sheet';
+import {
+  formatRelative,
+  isFuture,
+  nextSunday,
+  setHours,
+  setMinutes,
+  setSeconds,
+  startOfTomorrow,
+} from 'date-fns';
+import RemindMeDropdown from '../components/remindMeDropdown';
 
 const Home = ({navigation, todoList, editTodo, addTodo}) => {
   const [newTodo, setNewTodo] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [newTodoDateAndTime, setNewTodoDateAndTime] = useState(null);
+  const [newTodoNotifyAtLabel, setNewTodoNotifyAtLabel] = useState('');
+  const [notifyAt, setNotifyAt] = useState('');
   const [isShownDatePicker, setIsShownDatePicker] = useState(false);
+  const [isShownNotifyAtDatePicker, setIsShownNotifyAtDatePicker] =
+    useState(false);
 
   const actionSheetRef = useRef(null);
+
+  const scheduleNotification = (date, message) => {
+    PushNotification.localNotificationSchedule({
+      channelId: 'notifyMe',
+      title: 'My Notification Title',
+      message: message,
+      date,
+      allowWhileIdle: true,
+      playSound: true,
+      soundName: 'default',
+      vibrate: true,
+      importance: Importance.HIGH,
+    });
+  };
 
   const onAddNewTodo = () => {
     addTodo({
       newTodoText: newTodo,
       newTodoDescription,
       newTodoDateAndTime: newTodoDateAndTime.toString(),
+      newTodoNotifyAt: notifyAt?.toString() || '',
     });
+    if (notifyAt) {
+      scheduleNotification(notifyAt, newTodo);
+    }
     setNewTodo('');
     setNewTodoDescription('');
     setNewTodoDateAndTime(null);
+    setNotifyAt(null);
+    setNewTodoNotifyAtLabel('');
     actionSheetRef.current.hide();
   };
 
@@ -52,6 +90,14 @@ const Home = ({navigation, todoList, editTodo, addTodo}) => {
 
   const closeDatePicker = () => {
     setIsShownDatePicker(false);
+  };
+
+  const openNotifyAtPicker = () => {
+    setIsShownNotifyAtDatePicker(true);
+  };
+
+  const closeNotifyAtPicker = () => {
+    setIsShownNotifyAtDatePicker(false);
   };
 
   const onNewTodoDateAndTimeChange = date => {
@@ -77,6 +123,42 @@ const Home = ({navigation, todoList, editTodo, addTodo}) => {
       completedTodos: [],
     },
   );
+
+  const onRemindMeDropdownChange = item => {
+    switch (item.value) {
+      case 'laterTodayEvening':
+        const calculatedTime = setSeconds(
+          setMinutes(setHours(new Date(), 20), 0),
+          0,
+        );
+        if (isFuture(calculatedTime)) {
+          setNotifyAt(calculatedTime);
+          setNewTodoNotifyAtLabel(formatRelative(calculatedTime, new Date()));
+        } else {
+          ToastAndroid.show('Time cannot be in the past', ToastAndroid.SHORT);
+        }
+        break;
+      case 'tomorrowMorning':
+        const calculatedTime2 = setHours(startOfTomorrow(), 9);
+        setNotifyAt(calculatedTime2);
+        setNewTodoNotifyAtLabel(formatRelative(calculatedTime2, new Date()));
+        break;
+      case 'onNextSunday':
+        const calculatedTime3 = setSeconds(
+          setMinutes(setHours(nextSunday(new Date()), 9), 0),
+          0,
+        );
+        setNotifyAt(calculatedTime3);
+        setNewTodoNotifyAtLabel(formatRelative(calculatedTime3, new Date()));
+        break;
+      case 'pickDateAndTime':
+        console.log('pickDateAndTime', notifyAt);
+        openNotifyAtPicker();
+        break;
+      default:
+        break;
+    }
+  };
 
   const isNewTodoValid =
     newTodo.trim().length > 0 && newTodoDateAndTime !== null;
@@ -145,8 +227,23 @@ const Home = ({navigation, todoList, editTodo, addTodo}) => {
           />
           <View style={styles.actionIconsWrapper}>
             <TouchableOpacity onPress={openDatePicker}>
-              <TimerIcon height={24} width={24} />
+              <TimerIcon height={24} width={24} color="#fff" />
             </TouchableOpacity>
+            <RemindMeDropdown
+              onChange={onRemindMeDropdownChange}
+              notifyAtTime={notifyAt}
+              notifyAtLabel={newTodoNotifyAtLabel}
+            />
+
+            {notifyAt && (
+              <TouchableOpacity
+                onPress={() => {
+                  setNotifyAt(null);
+                }}>
+                <CrossIcon height={24} width={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity onPress={onAddNewTodo} disabled={!isNewTodoValid}>
               <SendIcon
                 height={24}
@@ -162,6 +259,16 @@ const Home = ({navigation, todoList, editTodo, addTodo}) => {
           onConfirm={onNewTodoDateAndTimeChange}
           onCancel={closeDatePicker}
         />
+        <DateTimePickerModal
+          isVisible={isShownNotifyAtDatePicker}
+          mode="datetime"
+          onConfirm={date => {
+            setNotifyAt(date);
+            setNewTodoNotifyAtLabel(formatRelative(date, new Date()));
+            closeNotifyAtPicker();
+          }}
+          onCancel={closeNotifyAtPicker}
+        />
       </ActionSheet>
     </View>
   );
@@ -176,7 +283,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroContent: {
-    flex: 1,
+    flexGrow: 1,
   },
   fallbackContainer: {
     flexGrow: 1,
@@ -236,6 +343,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 16,
+    gap: 16,
   },
   openActionSheetButton: {
     backgroundColor: '#8687E7',

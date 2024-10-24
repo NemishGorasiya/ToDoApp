@@ -10,7 +10,16 @@ import {
 } from 'react-native';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import {formatRelative} from 'date-fns';
+import PushNotification, {Importance} from 'react-native-push-notification';
+import {
+  formatRelative,
+  isFuture,
+  nextSunday,
+  setHours,
+  setMinutes,
+  setSeconds,
+  startOfTomorrow,
+} from 'date-fns';
 
 import TimerIcon from '../assets/icons/timer.svg';
 import TrashIcon from '../assets/icons/trash.svg';
@@ -18,10 +27,11 @@ import BackIcon from '../assets/icons/back.svg';
 import {useFocusEffect} from '@react-navigation/native';
 import ActionSheet from 'react-native-actions-sheet';
 import useDebounce from '../hooks/useDebounce';
+import RemindMeDropdown from '../components/remindMeDropdown';
 
 const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const {todo} = route.params;
-  const {id, text, description, dateAndTime, completed} = todo;
+  const {id, text, description, dateAndTime, completed, notifyAt = null} = todo;
 
   const [todoText, setTodoText] = useState(text);
   const todoTextRef = useRef(text);
@@ -29,9 +39,13 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
   const todoDescriptionRef = useRef(description);
   const [todoDateAndTime, setTodoDateAndTime] = useState(dateAndTime);
   const todoDateAndTimeRef = useRef(dateAndTime);
+  const [todoNotifyTime, setTodoNotifyTime] = useState(notifyAt);
+  const todoNotifyTimeRef = useRef(notifyAt);
   const [isTodoCompleted, setIsTodoCompleted] = useState(completed);
   const isTodoCompletedRef = useRef(completed);
   const [isShownDatePicker, setIsShownDatePicker] = useState(false);
+  const [isShownNotifyAtDatePicker, setIsShownNotifyAtDatePicker] =
+    useState(false);
 
   const actionSheetRef = useRef(null);
 
@@ -62,6 +76,14 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
     navigation.goBack();
   };
 
+  const openNotifyAtPicker = () => {
+    setIsShownNotifyAtDatePicker(true);
+  };
+
+  const closeNotifyAtPicker = () => {
+    setIsShownNotifyAtDatePicker(false);
+  };
+
   const showToast = message => {
     ToastAndroid.show(message, ToastAndroid.SHORT);
   };
@@ -81,7 +103,56 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
     setTodoDescription(value.slice(0, 2000));
   };
 
+  const onRemindMeDropdownChange = item => {
+    switch (item.value) {
+      case 'laterTodayEvening':
+        const calculatedTime = setSeconds(
+          setMinutes(setHours(new Date(), 20), 0),
+          0,
+        );
+        if (isFuture(calculatedTime)) {
+          setTodoNotifyTime(calculatedTime);
+          // setNewTodoNotifyAtLabel(formatRelative(calculatedTime, new Date()));
+        } else {
+          ToastAndroid.show('Time cannot be in the past', ToastAndroid.SHORT);
+        }
+        break;
+      case 'tomorrowMorning':
+        const calculatedTime2 = setHours(startOfTomorrow(), 9);
+        setTodoNotifyTime(calculatedTime2);
+        // setNewTodoNotifyAtLabel(formatRelative(calculatedTime2, new Date()));
+        break;
+      case 'onNextSunday':
+        const calculatedTime3 = setSeconds(
+          setMinutes(setHours(nextSunday(new Date()), 9), 0),
+          0,
+        );
+        setTodoNotifyTime(calculatedTime3);
+        // setNewTodoNotifyAtLabel(formatRelative(calculatedTime3, new Date()));
+        break;
+      case 'pickDateAndTime':
+        openNotifyAtPicker();
+        break;
+      default:
+        break;
+    }
+  };
+
   const formattedTime = formatRelative(todoDateAndTime, new Date());
+
+  const scheduleNotification = (date, message) => {
+    PushNotification.localNotificationSchedule({
+      channelId: 'notifyMe',
+      title: 'My Notification Title',
+      message: message,
+      date,
+      allowWhileIdle: true,
+      playSound: true,
+      soundName: 'default',
+      vibrate: true,
+      importance: Importance.HIGH,
+    });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -90,17 +161,25 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
           todoTextRef.current !== text ||
           todoDescriptionRef.current !== description ||
           isTodoCompletedRef.current !== completed ||
-          todoDateAndTimeRef.current !== dateAndTime
+          todoDateAndTimeRef.current !== dateAndTime ||
+          todoNotifyTimeRef.current !== notifyAt
         ) {
           editTodo(id, {
             text: todoTextRef.current === '' ? text : todoTextRef.current,
             description: todoDescriptionRef.current,
             dateAndTime: todoDateAndTimeRef.current.toString(),
             completed: isTodoCompletedRef.current,
+            notifyAt: todoNotifyTimeRef.current.toString(),
           });
         }
+        if (todoNotifyTimeRef.current !== notifyAt) {
+          scheduleNotification(
+            todoNotifyTimeRef.current,
+            todoTextRef.current === '' ? text : todoTextRef.current,
+          );
+        }
       };
-    }, [completed, dateAndTime, description, editTodo, id, text]),
+    }, [completed, dateAndTime, description, editTodo, id, notifyAt, text]),
   );
 
   useEffect(() => {
@@ -108,7 +187,14 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
     todoDescriptionRef.current = todoDescription;
     todoDateAndTimeRef.current = todoDateAndTime;
     isTodoCompletedRef.current = isTodoCompleted;
-  }, [isTodoCompleted, todoDateAndTime, todoDescription, todoText]);
+    todoNotifyTimeRef.current = todoNotifyTime;
+  }, [
+    isTodoCompleted,
+    todoDateAndTime,
+    todoDescription,
+    todoNotifyTime,
+    todoText,
+  ]);
 
   return (
     <ScrollView
@@ -158,6 +244,16 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
         </TouchableOpacity>
       </View>
       <View style={styles.todoRow}>
+        <View style={styles.todoRowLeft}>
+          <TimerIcon height={24} width={24} />
+          <Text style={[styles.todoSubText, styles.whiteText]}>Remind me:</Text>
+        </View>
+        <RemindMeDropdown
+          onChange={onRemindMeDropdownChange}
+          notifyAtTime={todoNotifyTime}
+        />
+      </View>
+      <View style={styles.todoRow}>
         <TouchableOpacity
           onPress={() => {
             actionSheetRef.current.show();
@@ -174,6 +270,22 @@ const Todo = ({navigation, route, editTodo, deleteTodo}) => {
         mode="datetime"
         onConfirm={onTodoDateAndTimeChange}
         onCancel={closeDatePicker}
+      />
+      <DateTimePickerModal
+        isVisible={isShownNotifyAtDatePicker}
+        mode="datetime"
+        onConfirm={date => {
+          if (isFuture(date)) {
+            setTodoNotifyTime(date);
+            closeNotifyAtPicker();
+          } else {
+            ToastAndroid.show(
+              'Please select a time in the future',
+              ToastAndroid.SHORT,
+            );
+          }
+        }}
+        onCancel={closeNotifyAtPicker}
       />
       <ActionSheet ref={actionSheetRef}>
         <View style={styles.actionSheetContent}>

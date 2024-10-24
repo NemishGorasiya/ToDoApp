@@ -12,7 +12,7 @@ import Splash from './src/screens/splash';
 
 const Stack = createNativeStackNavigator();
 
-import PushNotification from 'react-native-push-notification';
+import PushNotification, {Importance} from 'react-native-push-notification';
 import {PermissionsAndroid, Platform} from 'react-native';
 
 PushNotification.configure({
@@ -44,24 +44,23 @@ const App = () => {
   const [todoList, setTodoList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const testPush = () => {
-    PushNotification.localNotification({
-      channelId: 'notifyMe',
-      title: 'My Notification Title',
-      message: 'My Notification Message',
-    });
-  };
-
   const addTodo = useCallback(
-    async ({newTodoText, newTodoDescription = '', newTodoDateAndTime}) => {
+    async ({
+      newTodoText,
+      newTodoDescription = '',
+      newTodoDateAndTime,
+      newTodoNotifyAt = null,
+    }) => {
+      const id = uuid.v4();
       const updatedList = [
         ...todoList,
         {
-          id: uuid.v4(),
+          id,
           text: newTodoText,
           description: newTodoDescription,
           completed: false,
           dateAndTime: newTodoDateAndTime,
+          notifyAt: newTodoNotifyAt,
         },
       ];
       setTodoList(updatedList);
